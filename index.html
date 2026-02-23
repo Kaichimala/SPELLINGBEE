@@ -345,7 +345,7 @@
       <span class="detail-icon">📍</span>
       <div>
         <div class="detail-label">Where</div>
-        <div class="detail-value">Mlunguzu 2 — bring 1000K only, not a dictionary</div>
+        <div class="detail-value">Mlunguzu 2 — bring 1000 only, not a dictionary</div>
       </div>
     </div>
     <div class="detail-row">
@@ -361,8 +361,7 @@
     <div class="rules-title">🏆 The Rules (ish)</div>
     <div class="rule"><span class="rule-num">1</span><span>You get ONE word at a time. Nail it or bail it.</span></div>
     <div class="rule"><span class="rule-num">2</span><span>No phones. Yes, we can tell when you're Googling.</span></div>
-    <div class="rule"><span class="rule-num">3</span><span>Loser buys the first round. Winner buys nothing. That's the prize.</span></div>
-    <div class="rule"><span class="rule-num">4</span><span>Arguing about pronunciation IS allowed. Encouraged, even.</span></div>
+    <div class="rule"><span class="rule-num">3</span><span>Arguing about pronunciation IS allowed. Encouraged, even.</span></div>
   </div>
 
   <!-- RSVP -->
@@ -391,18 +390,25 @@
 <div class="stripe-bottom"></div>
 
 <footer>
-  Made with 🐝 and mild panic · <em>No dictionaries were harmed in the making of this event</em>
+  Made with 🐝 , Lexus and Director Kai · <em>No dictionaries were harmed in the making of this event</em>
 </footer>
 
 <script>
 /* ======= RSVP Logic ======= */
-function rsvp(choice) {
-  const name = document.getElementById('nameInput').value.trim() || 'Mystery Guest';
-  const box   = document.getElementById('responseBox');
-  const emoji = document.getElementById('responseEmoji');
-  const title = document.getElementById('responseTitle');
-  const text  = document.getElementById('responseText');
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbw0h_OcDbzXKdWNQmuPCMG6Cip5U3091axXRJo-pMp6mDWCMB6KKrpVueHDZrH4qYivWg/exec';
 
+function rsvp(choice) {
+  const nameVal = document.getElementById('nameInput').value.trim();
+  const name    = nameVal || 'Mystery Guest';
+  const box     = document.getElementById('responseBox');
+  const emoji   = document.getElementById('responseEmoji');
+  const title   = document.getElementById('responseTitle');
+  const text    = document.getElementById('responseText');
+
+  // Disable buttons to prevent double-submit
+  document.querySelectorAll('.btn').forEach(b => b.disabled = true);
+
+  // Optimistically show response immediately
   if (choice === 'yes') {
     emoji.textContent = '🎉';
     title.textContent = `W-O-R-D! You're in, ${name}!`;
@@ -417,11 +423,20 @@ function rsvp(choice) {
   }
 
   box.classList.remove('visible');
-  void box.offsetWidth; // reflow
+  void box.offsetWidth;
   box.classList.add('visible');
-
-  // Scroll to response
   setTimeout(() => box.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+
+  // Send to Google Sheets in the background
+  fetch(SHEET_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, rsvp: choice === 'yes' ? '✅ YES' : '❌ NO' })
+  }).catch(() => {
+    // Silent fail — user experience not affected
+    console.warn('Could not reach Google Sheets — response still shown.');
+  });
 }
 
 /* ======= Confetti ======= */
